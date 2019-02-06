@@ -1,8 +1,9 @@
 ﻿using Sandbox.Net;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
-public class CatController : MonoBehaviour {
+public class CatController : MonoBehaviour, IMoveHandler {
 	public float moveSpeed;
 	public float jumpHeight;
 	public float jumpDistance;
@@ -10,12 +11,17 @@ public class CatController : MonoBehaviour {
 	float2 velocity;
 	bool grounded = false;
 
+	public void OnMove(AxisEventData data) {
+		velocity.x = data.moveVector.x * moveSpeed;
+	}
+
 	void Update() {
 		var Δt = Time.deltaTime;
 
-		// Determine horizontal movement
-		velocity.x = Input.GetAxis("Horizontal") * moveSpeed;
-
+		// Select this cat if nothing is selected
+		if (EventSystem.current.currentSelectedGameObject == null) {
+			EventSystem.current.SetSelectedGameObject(gameObject);
+		}
 
 		// Determine vertical movement (jump)
 		var v0 = (2 * jumpHeight * moveSpeed) / jumpDistance;
@@ -72,5 +78,8 @@ public class CatController : MonoBehaviour {
 				new CatTalkMessage(closestNPC.transform.position, closestNPC.name).Send();
 			}
 		}
+
+		// Reset horizontal velocity
+		velocity.x = 0f;
 	}
 }
