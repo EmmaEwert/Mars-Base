@@ -153,5 +153,4 @@ public class Game : MonoBehaviour {
 			Server.Stop();
 		}
 	}
-
 }

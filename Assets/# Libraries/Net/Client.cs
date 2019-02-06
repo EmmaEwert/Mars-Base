@@ -112,7 +112,7 @@ namespace Sandbox.Net {
 
 		struct ReceiveJob : IJob {
 			public BasicNetworkDriver<IPv4UDPSocket> driver;
-			[ReadOnly] public NativeArray<NetworkConnection> connection;
+			public NativeArray<NetworkConnection> connection;
 
 			public void Execute() {
 				if (!connection[0].IsCreated) { return; }
