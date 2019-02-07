@@ -1,36 +1,38 @@
-﻿using UnityEngine;
-using TMPro;
-using Net;
-using System.Collections.Generic;
-using System.Linq;
-using Unity.Mathematics;
+﻿namespace Game {
+	using UnityEngine;
+	using TMPro;
+	using Net;
+	using System.Collections.Generic;
+	using System.Linq;
+	using Unity.Mathematics;
 
-[RequireComponent(typeof(TextMeshProUGUI))]
-public class ChatHandler : MonoBehaviour {
-	List<string> messages = new List<string>();
+	[RequireComponent(typeof(TextMeshProUGUI))]
+	public class ChatHandler : MonoBehaviour {
+		List<string> messages = new List<string>();
 
-	TextMeshProUGUI textMesh => GetComponent<TextMeshProUGUI>();
+		TextMeshProUGUI textMesh => GetComponent<TextMeshProUGUI>();
 
-	public void Send(string text) {
-		if (text == string.Empty) { return; }
-		new ChatMessage(FindObjectOfType<Client>().connectionID, text).Send();
-	}
-
-	void Add(ChatMessage message) {
-		var name = FindObjectOfType<Client>().playerConnections[message.id];
-		messages.Add($"{name}: {message.text}");
-		textMesh.text = string.Empty;
-		foreach (var text in messages.Skip(math.max(messages.Count - 10, 0))) {
-			textMesh.text += $"\n{text}";
+		public void Send(string text) {
+			if (text == string.Empty) { return; }
+			new ChatMessage(FindObjectOfType<Client>().connectionID, text).Send();
 		}
-	}
 
-	void Broadcast(ChatMessage message) {
-		message.Broadcast();
-	}
+		void Add(ChatMessage message) {
+			var name = FindObjectOfType<Client>().playerConnections[message.id];
+			messages.Add($"{name}: {message.text}");
+			textMesh.text = string.Empty;
+			foreach (var text in messages.Skip(math.max(messages.Count - 10, 0))) {
+				textMesh.text += $"\n{text}";
+			}
+		}
 
-	void Start() {
-		Client.Listen<ChatMessage>(Add);
-		Server.Listen<ChatMessage>(Broadcast);
+		void Broadcast(ChatMessage message) {
+			message.Broadcast();
+		}
+
+		void Start() {
+			Client.Listen<ChatMessage>(Add);
+			Server.Listen<ChatMessage>(Broadcast);
+		}
 	}
 }

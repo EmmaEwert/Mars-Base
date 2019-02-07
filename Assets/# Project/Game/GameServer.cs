@@ -1,51 +1,53 @@
-using Net;
-using Unity.Mathematics;
-using UnityEngine;
+namespace Game {
+	using Net;
+	using Unity.Mathematics;
+	using UnityEngine;
 
-public class GameServer : MonoBehaviour {
-	string[] catStrings = {
-		"Hum hum hummm...",
-		"Nice day out today!",
-		"Did you see the sunrise?",
-		"There should be a mewteor shower tonight!",
-		"Can't wait for the next shipment from Purth...",
-		"...",
-		"Hmm.",
-		"Well, that's not right...",
-		"Hello.",
-		"Hello!",
-		"Hey.",
-		"Hey!",
-		"Heya.",
-		"Hi.",
-		"Hi!",
-		"Hiya!",
-		"Greetings.",
-		"Nice to see you.",
-		"This Miaurtian dust gets everywhere...",
-		"Chu-!",
-		"Hungryyyyy...",
-		"Can we pause for food?",
-		"I wish the rations included snacks...",
-		"Do you think we could grow mice ?",
-		"Sleepy...",
-		"Tired...",
-		"Tiiiiired...",
-		"I want a naaaaap.",
-		"Not now.",
-		"Talk later ?",
-		"Sorry, busy.",
-		"...do you ever wish we had enough rovers to race them?",
-		"Eugh... hearing the dust storms against the ice shield makes my fur stand on end.",
-	};
+	public class GameServer : MonoBehaviour {
+		string[] catStrings = {
+			"Hum hum hummm...",
+			"Nice day out today!",
+			"Did you see the sunrise?",
+			"There should be a mewteor shower tonight!",
+			"Can't wait for the next shipment from Purth...",
+			"...",
+			"Hmm.",
+			"Well, that's not right...",
+			"Hello.",
+			"Hello!",
+			"Hey.",
+			"Hey!",
+			"Heya.",
+			"Hi.",
+			"Hi!",
+			"Hiya!",
+			"Greetings.",
+			"Nice to see you.",
+			"This Miaurtian dust gets everywhere...",
+			"Chu-!",
+			"Hungryyyyy...",
+			"Can we pause for food?",
+			"I wish the rations included snacks...",
+			"Do you think we could grow mice ?",
+			"Sleepy...",
+			"Tired...",
+			"Tiiiiired...",
+			"I want a naaaaap.",
+			"Not now.",
+			"Talk later ?",
+			"Sorry, busy.",
+			"...do you ever wish we had enough rovers to race them?",
+			"Eugh... hearing the dust storms against the ice shield makes my fur stand on end.",
+		};
 
-	void Start() {
-		Server.Listen<PlayerTransformMessage>(m => m.Broadcast());
-		Server.Listen<CatTalkMessage>(m => m.Broadcast());
-		gameObject.AddComponent<Server>();
-		var random = new Unity.Mathematics.Random(1); 
-		for (var i = 0; i < catStrings.Length; ++i) {
-			ActorManager.instance.Spawn(catStrings[i], new float3(random.NextInt() % 128, 1, 0));
+		void Start() {
+			Server.Listen<PlayerTransformMessage>(m => m.Broadcast());
+			Server.Listen<CatTalkMessage>(m => m.Broadcast());
+			gameObject.AddComponent<Server>();
+			var random = new Unity.Mathematics.Random(1); 
+			for (var i = 0; i < catStrings.Length; ++i) {
+				ActorManager.instance.Spawn(catStrings[i], new float3(random.NextInt() % 128, 1, 0));
+			}
 		}
 	}
 }

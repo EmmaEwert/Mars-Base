@@ -1,5 +1,7 @@
-﻿using UnityEngine;
+﻿namespace Game {
+	using UnityEngine;
 
-public class Actor : MonoBehaviour {
-	public string text;
+	public class Actor : MonoBehaviour {
+		public string text;
+	}
 }
