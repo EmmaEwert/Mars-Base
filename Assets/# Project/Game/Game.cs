@@ -11,6 +11,7 @@ public class Game : MonoBehaviour {
 
 	public GameObject catTalkPrefab;
 	public GameObject npcPrefab;
+	public GameObject localPlayerPrefab;
 	public GameObject remotePlayerPrefab;
 	Dictionary<int, GameObject> players = new Dictionary<int, GameObject>();
 	public Dictionary<int, GameObject> npcs = new Dictionary<int, GameObject>();
@@ -93,11 +94,11 @@ public class Game : MonoBehaviour {
 		Client.playerName = playerName;
 	}
 
-	///<summary>Switch client scene after initial connection to server has been established.</summary>
+	///<summary>Request all cats on the server and deactivate the main menu.</summary>
 	void StartClientGame(ConnectServerMessage message) {
-		DontDestroyOnLoad(gameObject);
-		SceneManager.LoadScene("Game", LoadSceneMode.Single);
-		SceneManager.sceneLoaded += OnSceneLoaded;
+		new GiveMeTheCatsMessage().Send();
+		GameObject.Find("Main Menu").SetActive(false);
+		Instantiate(localPlayerPrefab);
 	}
 
 	///<summary>Update position of a single remote player.</summary>
@@ -120,7 +121,7 @@ public class Game : MonoBehaviour {
 
 	///<summary>Spawn message prefab each time an npc cat is "talked with".</summary>
 	void ReceiveCatTalk(CatTalkMessage message) {
-		var canvas = GameObject.Find("World Space Canvas");
+		var canvas = GameObject.Find("World/Canvas");
 		var talk = Instantiate(catTalkPrefab);
 		talk.GetComponentInChildren<TextMeshProUGUI>().text = message.text;
 		talk.transform.SetParent(canvas.transform);
@@ -128,14 +129,9 @@ public class Game : MonoBehaviour {
 		talk.name = $"{message.text} Talk";
 	}
 
-	///<summary>Request all cats on the server once the game scene has loaded.</summary>
-	void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
-		new GiveMeTheCatsMessage().Send();
-	}
-
 	// Common stuff.
 
-	///<summary>Set up all the message listeners.</summary>
+	///<summary>Set up all the message listeners, load main menu.</summary>
 	void Start() {
 		Client.Listen<ConnectServerMessage>(StartClientGame);
 		Client.Listen<PlayerTransformMessage>(SyncTransform);

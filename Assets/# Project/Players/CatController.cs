@@ -3,7 +3,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class CatController : MonoBehaviour, IMoveHandler {
+public class CatController : MonoBehaviour {
 	public float moveSpeed;
 	public float jumpHeight;
 	public float jumpDistance;
@@ -11,22 +11,24 @@ public class CatController : MonoBehaviour, IMoveHandler {
 	float2 velocity;
 	bool grounded = false;
 
-	public void OnMove(AxisEventData data) {
-		velocity.x = data.moveVector.x * moveSpeed;
-	}
-
 	void Update() {
 		var Δt = Time.deltaTime;
 
-		// Select this cat if nothing is selected
+		// Select this cat if nothing is selected.
 		if (EventSystem.current.currentSelectedGameObject == null) {
 			EventSystem.current.SetSelectedGameObject(gameObject);
 		}
 
-		// Determine vertical movement (jump)
-		var v0 = (2 * jumpHeight * moveSpeed) / jumpDistance;
-		if (grounded && Input.GetButtonDown("Jump")) {
-			velocity.y = v0;
+		// Handle inputs if this cat is selected.
+		if (EventSystem.current.currentSelectedGameObject == gameObject) {
+			// Determine horizontal movement.
+			velocity.x = Input.GetAxis("Horizontal") * moveSpeed;
+
+			// Determine vertical movement (jump)
+			var v0 = (2 * jumpHeight * moveSpeed) / jumpDistance;
+			if (grounded && Input.GetButtonDown("Jump")) {
+				velocity.y = v0;
+			}
 		}
 
 		// Determine gravity.
@@ -78,8 +80,5 @@ public class CatController : MonoBehaviour, IMoveHandler {
 				new CatTalkMessage(closestNPC.transform.position, closestNPC.name).Send();
 			}
 		}
-
-		// Reset horizontal velocity
-		velocity.x = 0f;
 	}
 }
