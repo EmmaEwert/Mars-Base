@@ -9,7 +9,7 @@ namespace Game.Server {
 			var entities = Manager.FindAll(subjects);
 			foreach (var entity in entities) {
 				var sprite = entity.GetComponent<RenderSprite>().resource;
-				new SpriteMessage(entity, sprite).Send(message.connection);
+				new SpriteMessage { id = entity.id, sprite = sprite }.Send(message.connection);
 			}
 		}
 

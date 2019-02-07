@@ -14,7 +14,10 @@
 
 		public void Send(string text) {
 			if (text == string.Empty) { return; }
-			new ChatMessage(FindObjectOfType<Net.Client>().connectionID, text).Send();
+			new ChatMessage {
+				id = FindObjectOfType<Net.Client>().connectionID,
+				text = text
+			}.Send();
 		}
 
 		void Add(ChatMessage message) {

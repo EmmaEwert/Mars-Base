@@ -18,7 +18,7 @@ namespace Game.Server {
 			entity.id = nextID;
 			entities[nextID++] = entity;
 			components[typeof(Entity)].Add(entity.id);
-			new EntityMessage(entity).Broadcast();
+			new EntityMessage { id = entity.id, name = name }.Broadcast();
 			return entity;
 		}
 
@@ -49,7 +49,7 @@ namespace Game.Server {
 
 		void SendAll(ConnectClientMessage message) {
 			foreach (var entity in entities.Values) {
-				new EntityMessage(entity).Send(message.connection);
+				new EntityMessage { id = entity.id, name = entity.name }.Send(message.connection);
 			}
 		}
 

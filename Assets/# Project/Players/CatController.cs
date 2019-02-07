@@ -56,7 +56,10 @@
 			// Sync to other players.
 			if (math.any(position != new float3(transform.position))) {
 				// FIXME: Don't use connection ID
-				new PlayerTransformMessage(FindObjectOfType<Net.Client>().connectionID, position).Send();
+				new PlayerTransformMessage {
+					id = FindObjectOfType<Net.Client>().connectionID,
+					position = position
+				}.Send();
 			}
 
 			// Apply position.
