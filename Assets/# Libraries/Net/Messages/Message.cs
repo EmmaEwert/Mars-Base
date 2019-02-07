@@ -9,12 +9,12 @@ namespace Net {
 		//protected static List<Message> serverReceivedMessages = new List<Message>();
 		static List<System.Type> types;
 
-		internal static List<System.Type> Types =>
+		internal static List<Type> Types =>
 			types = types ?? Reflector.ImplementationsOf<Message>();
 		protected static int StringSize(string text) =>
 			sizeof(int) + Encoding.UTF8.GetByteCount(text);
-		static Dictionary<System.Type, Action<Message>> onServerReceive = new Dictionary<Type, Action<Message>>();
-		static Dictionary<System.Type, Action<Message>> onClientReceive = new Dictionary<Type, Action<Message>>();
+		static Dictionary<Type, Action<Message>> onServerReceive = new Dictionary<Type, Action<Message>>();
+		static Dictionary<Type, Action<Message>> onClientReceive = new Dictionary<Type, Action<Message>>();
 
 		internal int connection;
 

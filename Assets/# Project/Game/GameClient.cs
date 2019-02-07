@@ -11,7 +11,6 @@ public class GameClient : MonoBehaviour {
 	GameObject localPlayerPrefab => Resources.Load("Local Player") as GameObject;
 	GameObject remotePlayerPrefab => Resources.Load("Remote Player") as GameObject;
 	Dictionary<int, GameObject> players = new Dictionary<int, GameObject>();
-	public Dictionary<int, GameObject> npcs = new Dictionary<int, GameObject>();
 
 	///<summary>Request all cats on the server and deactivate the main menu.</summary>
 	void StartClientGame(ConnectServerMessage message) {
@@ -30,14 +29,6 @@ public class GameClient : MonoBehaviour {
 		}
 	}
 
-	///<summary>Spawn a single cat; bulk response from server upon a GiveMeTheCatsMessage</summary>
-	void ReceiveCat(CatSpawnMessage message) {
-		var npc = Instantiate(npcPrefab);
-		npc.transform.position = message.position;
-		npc.name = message.text;
-		npcs.Add(message.id, npc);
-	}
-
 	///<summary>Spawn message prefab each time an npc cat is "talked with".</summary>
 	void ReceiveCatTalk(CatTalkMessage message) {
 		var canvas = GameObject.Find("World/Canvas");
@@ -45,13 +36,12 @@ public class GameClient : MonoBehaviour {
 		talk.GetComponentInChildren<TextMeshProUGUI>().text = message.text;
 		talk.transform.SetParent(canvas.transform);
 		talk.transform.position = message.position;
-		talk.name = $"{message.text} Talk";
+		talk.name = message.text;
 	}
 	
 	void Start() {
 		Client.Listen<ConnectServerMessage>(StartClientGame);
 		Client.Listen<PlayerTransformMessage>(SyncTransform);
-		Client.Listen<CatSpawnMessage>(ReceiveCat);
 		Client.Listen<CatTalkMessage>(ReceiveCatTalk);
 		var client = gameObject.AddComponent<Client>();
 		client.remoteIP = remoteIP;

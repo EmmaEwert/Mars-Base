@@ -62,23 +62,23 @@ public class CatController : MonoBehaviour {
 		transform.position = position;
 
 		// Show chat message for a cat close by?
-		GameObject closestNPC = null;
-		foreach (var npc in FindObjectOfType<GameClient>().npcs.Values) {
-			var diff = new float3(npc.transform.position - transform.position);
+		Actor closestActor = null;
+		foreach (var actor in FindObjectsOfType<Actor>()) {
+			var diff = new float3(actor.transform.position - transform.position);
 			if (math.dot(diff, diff) < 8f) {
-				if (closestNPC != null) {
-					var diff2 = new float3(closestNPC.transform.position - transform.position);
+				if (closestActor != null) {
+					var diff2 = new float3(closestActor.transform.position - transform.position);
 					if (math.dot(diff2, diff2) > math.dot(diff, diff)) {
-						closestNPC = npc;
+						closestActor = actor;
 					}
 				} else {
-					closestNPC = npc;
+					closestActor = actor;
 				}
 			}
 		}
-		if (closestNPC != null) {
-			if (GameObject.Find($"{closestNPC.name} Talk") == null) {
-				new CatTalkMessage(closestNPC.transform.position, closestNPC.name).Send();
+		if (closestActor != null) {
+			if (GameObject.Find($"{closestActor.text}") == null) {
+				new CatTalkMessage(closestActor.transform.position, closestActor.text).Send();
 			}
 		}
 	}

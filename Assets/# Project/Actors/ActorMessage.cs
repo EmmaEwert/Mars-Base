@@ -1,18 +1,18 @@
 using Net;
 using Unity.Mathematics;
 
-public class CatSpawnMessage : ReliableMessage, IServerMessage {
+public class ActorMessage : ReliableMessage, IServerMessage {
 	public int id;
 	public float3 position;
 	public string text;
 
-	protected override int length => sizeof(int) + sizeof(float) * 3 + StringSize(text);
+	protected override int length => sizeof(int) + StringSize(text);
 
-	public CatSpawnMessage() { }
-	public CatSpawnMessage(int id, float3 position, string text) {
+	public ActorMessage() { }
+	public ActorMessage(int id, Actor actor) {
 		this.id = id;
-		this.position = position;
-		this.text = text;
+		this.position = actor.transform.position;
+		this.text = actor.text;
 	}
 
 	public void Read(Reader reader) {
