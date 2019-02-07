@@ -3,7 +3,7 @@
 		public int id;
 		public string name;
 
-		public bool local => id == Client.connectionID;
+		public bool local => id == UnityEngine.GameObject.FindObjectOfType<Client>().connectionID;
 		protected override int length => sizeof(int) + StringSize(name);
 
 		public JoinMessage() { }

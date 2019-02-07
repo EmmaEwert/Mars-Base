@@ -54,7 +54,8 @@ public class CatController : MonoBehaviour {
 
 		// Sync to other players.
 		if (math.any(position != new float3(transform.position))) {
-			new PlayerTransformMessage(Client.connectionID, position).Send();
+			// FIXME: Don't use connection ID
+			new PlayerTransformMessage(FindObjectOfType<Client>().connectionID, position).Send();
 		}
 
 		// Apply position.

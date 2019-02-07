@@ -65,7 +65,7 @@ public class Game : MonoBehaviour {
 		}
 		var client = gameObject.AddComponent<Client>();
 		client.remoteIP = IP.local.ToString();
-		Client.playerName = playerName;
+		client.playerName = playerName;
 	}
 
 	///<summary>Relay player positions to all clients.</summary>
@@ -91,7 +91,7 @@ public class Game : MonoBehaviour {
 	public void Join() {
 		var client = gameObject.AddComponent<Client>();
 		client.remoteIP = remoteIP;
-		Client.playerName = playerName;
+		client.playerName = playerName;
 	}
 
 	///<summary>Request all cats on the server and deactivate the main menu.</summary>
@@ -103,7 +103,8 @@ public class Game : MonoBehaviour {
 
 	///<summary>Update position of a single remote player.</summary>
 	void SyncTransform(PlayerTransformMessage message) {
-		if (message.id != Client.connectionID) {
+		// FIXME: Should have player ID instead, connectionID is for internal use
+		if (message.id != GetComponent<Client>().connectionID) {
 			if (!players.TryGetValue(message.id, out var player)) {
 				players[message.id] = Instantiate(remotePlayerPrefab);
 			}

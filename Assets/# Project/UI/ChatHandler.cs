@@ -13,11 +13,11 @@ public class ChatHandler : MonoBehaviour {
 
 	public void Send(string text) {
 		if (text == string.Empty) { return; }
-		new ChatMessage(Client.connectionID, text).Send();
+		new ChatMessage(FindObjectOfType<Client>().connectionID, text).Send();
 	}
 
 	void Add(ChatMessage message) {
-		var name = Client.playerConnections[message.id];
+		var name = FindObjectOfType<Client>().playerConnections[message.id];
 		messages.Add($"{name}: {message.text}");
 		textMesh.text = string.Empty;
 		foreach (var text in messages.Skip(math.max(messages.Count - 10, 0))) {
