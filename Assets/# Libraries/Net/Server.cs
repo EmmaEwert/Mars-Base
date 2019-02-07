@@ -3,7 +3,6 @@
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Net;
-	using System.Net.Sockets;
 	using Unity.Collections;
 	using Unity.Jobs;
 	using Unity.Networking.Transport;
@@ -23,18 +22,6 @@
 		static float ping;
 		static Dictionary<System.Type, Action<Message>> handlers = new Dictionary<Type, Action<Message>>();
 
-		public static IPAddress localIP {
-			get {
-				var host = Dns.GetHostEntry(Dns.GetHostName());
-				foreach (var ip in host.AddressList) {
-					if (ip.AddressFamily == AddressFamily.InterNetwork) {
-						return ip;
-					}
-				}
-				return IPAddress.Loopback;
-			}
-		}
-
 		public static void Listen<T>(Action<T> handler) where T : Message {
 			if (Server.handlers.TryGetValue(typeof(T), out var handlers)) {
 				Server.handlers[typeof(T)] = handlers + new Action<Message>(o => handler((T)o));
@@ -46,7 +33,7 @@
 		///<summary>Start a local server and a client with the given player name.</summary>
 		void Start() {
 			driver = new BasicNetworkDriver<IPv4UDPSocket>(new INetworkParameter[0]);
-			var endpoint = new IPEndPoint(localIP, 54889);
+			var endpoint = new IPEndPoint(IP.local, 54889);
 			if (driver.Bind(endpoint) != 0) {
 				Debug.Log($"S: Failed to bind {endpoint.Address}:{endpoint.Port}");
 			} else {
@@ -179,6 +166,11 @@
 			var type = Message.Types[typeIndex];
 			var message = (Message)Activator.CreateInstance(type);
 			message.Receive(reader, connection);
+		}
+
+		///<summary>Clean up network internals before quitting.</summary>
+		void OnApplicationQuit() {
+			Server.Stop();
 		}
 
 		struct UpdateJob : IJob {

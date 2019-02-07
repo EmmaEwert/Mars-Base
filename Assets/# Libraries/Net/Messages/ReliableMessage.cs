@@ -38,7 +38,7 @@ namespace Sandbox.Net {
 			foreach (var sequence in clientSequences) {
 				var message = clientMessages[sequence];
 				if (message.resends == 8) {
-					Client.Stop();
+					Application.Quit();
 					return;
 				}
 				if (time - message.timestamp > Delays[message.resends]) {

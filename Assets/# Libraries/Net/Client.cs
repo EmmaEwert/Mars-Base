@@ -8,18 +8,11 @@ namespace Sandbox.Net {
 	using UnityEngine;
 
 	public class Client : MonoBehaviour {
-		internal static Dictionary<int, string> players = new Dictionary<int, string>();
-		internal static int id;
 		internal static List<Message> receivedMessages = new List<Message>();
-		static BasicNetworkDriver<IPv4UDPSocket> driver;
-		static NativeArray<NetworkConnection> connection;
-		static List<NativeArray<byte>> messages = new List<NativeArray<byte>>();
-		static JobHandle receiveJobHandle;
-		static JobHandle[] sendJobHandles = new JobHandle[0];
-		static Dictionary<System.Type, Action<Message>> handlers = new Dictionary<Type, Action<Message>>();
-		internal string remoteIP;
-		public static string playerName;
+		static List<NativeArray<byte>> sentMessages = new List<NativeArray<byte>>();
+		static Dictionary<Type, Action<Message>> handlers = new Dictionary<Type, Action<Message>>();
 
+		///<summary>Add a handler to be called on receiving a Message of a specific type.</summary>
 		public static void Listen<T>(Action<T> handler) where T : Message {
 			if (Client.handlers.TryGetValue(typeof(T), out var handlers)) {
 				Client.handlers[typeof(T)] = handlers + new Action<Message>(o => handler((T)o));
@@ -28,91 +21,103 @@ namespace Sandbox.Net {
 			}
 		}
 
+		///<summary>Queue a Message-as-byte-array for sending to the server.</summary>
+		internal static void Send(byte[] bytes) {
+			var data = new NativeArray<byte>(bytes, Allocator.TempJob);
+			sentMessages.Add(data);
+		}
+
+		public string playerName;
+		public string remoteIP;
+		///<summary>Client's unique connection ID on the server</summary>
+		internal int connectionID;
+		///<summary>Other clients' names and unique connection IDs on the server</summary>
+		internal Dictionary<int, string> playerConnections = new Dictionary<int, string>();
+		BasicNetworkDriver<IPv4UDPSocket> driver;
+		NativeArray<NetworkConnection> connection;
+		JobHandle receiveJobHandle;
+		JobHandle[] sendJobHandles = new JobHandle[0];
+
+		///<summary>Call all handlers listening for a Message, based on its type.</summary>
+		void Handle(Message message) {
+			if (handlers.TryGetValue(message.GetType(), out var handler)) {
+				handler(message);
+			} else {
+				Debug.Log($"C: No handlers for {message.GetType()}, ignoring…");
+			}
+		}
+
+		///<summary>Set up listeners and data structures, and connect to server.</summary>
 		void Start() {
+			Listen<ConnectServerMessage>(message => connectionID = message.id);
+			Listen<JoinMessage>(message => playerConnections[message.id] = message.name);
+			Listen<PingMessage>(message => message.Send());
 			driver = new BasicNetworkDriver<IPv4UDPSocket>(new INetworkParameter[0]);
 			connection = new NativeArray<NetworkConnection>(1, Allocator.Persistent);
 			var endpoint = new IPEndPoint(IPAddress.Parse(remoteIP), 54889);
 			connection[0] = driver.Connect(endpoint);
 			Debug.Log($"C: Connecting to {endpoint}…");
-			Listen<ConnectServerMessage>(message => id = message.id);
-			Listen<JoinMessage>(message => players[message.id] = message.name);
-			Listen<PingMessage>(message => message.Send());
 			ReliableMessage.Start();
 		}
 
-		public static void Stop() {
-			receiveJobHandle.Complete();
-			for (var i = 0; i < sendJobHandles.Length; ++i) {
-				sendJobHandles[i].Complete();
-			}
-			for (var i = 0; i < messages.Count; ++i) {
-				messages[i].Dispose();
-			}
-			connection.Dispose();
-			driver.Dispose();
-			// TODO: Disconnect if connected
-		}
-
+		///<summary>Handle messages, and update message and network state.</summary>
 		void Update() {
-			// Finish up last frame's jobs
+			// Finish up last frame's jobs.
 			receiveJobHandle.Complete();
 			for (var i = 0; i < sendJobHandles.Length; ++i) {
 				sendJobHandles[i].Complete();
-				messages[i].Dispose();
+				sentMessages[i].Dispose();
 			}
-			messages.RemoveRange(0, sendJobHandles.Length);
+			sentMessages.RemoveRange(0, sendJobHandles.Length);
 
-			// Process received messages
+			// Process received messages on the main thread.
 			var messageCount = receivedMessages.Count;
 			for (var i = 0; i < messageCount; ++i) {
-				OnReceive(receivedMessages[i]);
+				Handle(receivedMessages[i]);
 			}
 			receivedMessages.RemoveRange(0, messageCount);
 
-			// Schedule new network event reception
+			// Schedule new network event reception job.
 			var receiveJob = new ReceiveJob {
 				driver = driver,
 				connection = connection,
+				playerName = playerName
 			};
 			receiveJobHandle = driver.ScheduleUpdate();
 			receiveJobHandle = receiveJob.Schedule(receiveJobHandle);
 
-			// Schedule message queue sending
-			sendJobHandles = new JobHandle[messages.Count];
-			for (var i = 0; i < messages.Count; ++i) {
+			// Schedule message queue sending jobs.
+			sendJobHandles = new JobHandle[sentMessages.Count];
+			for (var i = 0; i < sentMessages.Count; ++i) {
 				sendJobHandles[i] = receiveJobHandle = new SendJob {
 					driver = driver,
 					connection = connection,
-					message = messages[i]
+					message = sentMessages[i]
 				}.Schedule(receiveJobHandle);
 			}
 
 			ReliableMessage.Update();
 		}
 
-		static void OnReceive(Message message) {
-			if (handlers.TryGetValue(message.GetType(), out var handler)) {
-				handler(message);
-			} else {
-				Debug.Log($"No client handlers for {message.GetType()}, ignoring…");
+		///<summary>Clean up network internals before quitting.</summary>
+		void OnApplicationQuit() {
+			receiveJobHandle.Complete();
+			for (var i = 0; i < sendJobHandles.Length; ++i) {
+				sendJobHandles[i].Complete();
 			}
+			for (var i = 0; i < sentMessages.Count; ++i) {
+				sentMessages[i].Dispose();
+			}
+			connection.Dispose();
+			driver.Dispose();
+			// TODO: Disconnect if connected
 		}
 
-		internal static void Send(byte[] bytes) {
-			var data = new NativeArray<byte>(bytes, Allocator.TempJob);
-			messages.Add(data);
-		}
-
-		static void Receive(Reader reader) {
-			reader.Read(out ushort typeIndex);
-			var type = Message.Types[typeIndex];
-			var message = (Message)Activator.CreateInstance(type);
-			message.Receive(reader);
-		}
-
+		///<summary>Handles reception of all network events.</summary>
 		struct ReceiveJob : IJob {
 			public BasicNetworkDriver<IPv4UDPSocket> driver;
 			public NativeArray<NetworkConnection> connection;
+			public string playerName;
 
 			public void Execute() {
 				if (!connection[0].IsCreated) { return; }
@@ -130,7 +135,10 @@ namespace Sandbox.Net {
 							break;
 						case NetworkEvent.Type.Data:
 							using (var reader = new Reader(streamReader)) {
-								Receive(reader);
+								reader.Read(out ushort typeIndex);
+								var type = Message.Types[typeIndex];
+								var message = (Message)Activator.CreateInstance(type);
+								message.Receive(reader);
 							}
 							break;
 					}
@@ -138,6 +146,7 @@ namespace Sandbox.Net {
 			}
 		}
 
+		///<summary>Send queued messages to server.</summary>
 		struct SendJob : IJob {
 			public BasicNetworkDriver<IPv4UDPSocket> driver;
 			[ReadOnly] public NativeArray<NetworkConnection> connection;

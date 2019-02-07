@@ -54,7 +54,7 @@ public class CatController : MonoBehaviour {
 
 		// Sync to other players.
 		if (math.any(position != new float3(transform.position))) {
-			new PlayerTransformMessage(Client.id, position).Send();
+			new PlayerTransformMessage(Client.connectionID, position).Send();
 		}
 
 		// Apply position.

@@ -64,7 +64,7 @@ public class Game : MonoBehaviour {
 			serverNPCs.Add((new float3(random.NextInt() % 128, 1, 0), catStrings[i]));
 		}
 		var client = gameObject.AddComponent<Client>();
-		client.remoteIP = Server.localIP.ToString();
+		client.remoteIP = IP.local.ToString();
 		Client.playerName = playerName;
 	}
 
@@ -103,7 +103,7 @@ public class Game : MonoBehaviour {
 
 	///<summary>Update position of a single remote player.</summary>
 	void SyncTransform(PlayerTransformMessage message) {
-		if (message.id != Client.id) {
+		if (message.id != Client.connectionID) {
 			if (!players.TryGetValue(message.id, out var player)) {
 				players[message.id] = Instantiate(remotePlayerPrefab);
 			}
@@ -140,13 +140,5 @@ public class Game : MonoBehaviour {
 		Server.Listen<PlayerTransformMessage>(BroadcastTransform);
 		Server.Listen<GiveMeTheCatsMessage>(SendCatsToClient);
 		Server.Listen<CatTalkMessage>(BroadcastCatTalk);
-	}
-
-	///<summary>Clean up network client and server internals before quitting.</summary>
-	void OnApplicationQuit() {
-		Client.Stop();
-		if (server) {
-			Server.Stop();
-		}
 	}
 }
