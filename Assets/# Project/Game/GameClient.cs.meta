@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 6fedf9f6e27700c41b23eb54a5153a50
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - catTalkPrefab: {fileID: 6620381869382728651, guid: 648d566aa24f83449a5deebc5c21ac49,
+      type: 3}
+  - npcPrefab: {fileID: 209215394344586548, guid: 53c5e8530ada6734eb6a5f194ef2efa2,
+      type: 3}
+  - localPlayerPrefab: {fileID: 356708117227592564, guid: 1e2f319ec433a4a45bfb3b524519806e,
+      type: 3}
+  - remotePlayerPrefab: {fileID: 209215394344586548, guid: 53c5e8530ada6734eb6a5f194ef2efa2,
+      type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

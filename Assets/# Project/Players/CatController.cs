@@ -63,7 +63,7 @@ public class CatController : MonoBehaviour {
 
 		// Show chat message for a cat close by?
 		GameObject closestNPC = null;
-		foreach (var npc in FindObjectOfType<Game>().npcs.Values) {
+		foreach (var npc in FindObjectOfType<GameClient>().npcs.Values) {
 			var diff = new float3(npc.transform.position - transform.position);
 			if (math.dot(diff, diff) < 8f) {
 				if (closestNPC != null) {
