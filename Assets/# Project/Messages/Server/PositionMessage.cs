@@ -2,15 +2,15 @@ namespace Game {
 	using Net;
 	using Unity.Mathematics;
 
-	public class ActorTransformMessage : Message, IClientMessage, IServerMessage {
+	public class PositionMessage : ReliableMessage, IServerMessage {
 		public int id;
 		public float3 position;
 
 		protected override int length => sizeof(int) + sizeof(float) * 3;
 
-		public ActorTransformMessage() { }
-		public ActorTransformMessage(int id, float3 position) {
-			this.id = id;
+		public PositionMessage() { }
+		public PositionMessage(Entity entity, float3 position) {
+			this.id = entity.id;
 			this.position = position;
 		}
 

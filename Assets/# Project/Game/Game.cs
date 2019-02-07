@@ -8,14 +8,14 @@ namespace Game {
 
 		///<summary>Start a server and a client.</summary>
 		public void Host() {
-			gameObject.AddComponent<GameServer>();
+			gameObject.AddComponent<Server.GameServer>();
 			remoteIP = IP.local.ToString();
 			Join();
 		}
 
 		///<summary>Start a client.</summary>
 		public void Join() {
-			var client = gameObject.AddComponent<GameClient>();
+			var client = gameObject.AddComponent<Client.GameClient>();
 			client.remoteIP = remoteIP;
 			client.playerName = playerName;
 		}

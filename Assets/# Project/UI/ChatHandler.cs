@@ -14,11 +14,11 @@
 
 		public void Send(string text) {
 			if (text == string.Empty) { return; }
-			new ChatMessage(FindObjectOfType<Client>().connectionID, text).Send();
+			new ChatMessage(FindObjectOfType<Net.Client>().connectionID, text).Send();
 		}
 
 		void Add(ChatMessage message) {
-			var name = FindObjectOfType<Client>().playerConnections[message.id];
+			var name = FindObjectOfType<Net.Client>().playerConnections[message.id];
 			messages.Add($"{name}: {message.text}");
 			textMesh.text = string.Empty;
 			foreach (var text in messages.Skip(math.max(messages.Count - 10, 0))) {
@@ -31,8 +31,8 @@
 		}
 
 		void Start() {
-			Client.Listen<ChatMessage>(Add);
-			Server.Listen<ChatMessage>(Broadcast);
+			Net.Client.Listen<ChatMessage>(Add);
+			Net.Server.Listen<ChatMessage>(Broadcast);
 		}
 	}
 }

@@ -56,32 +56,11 @@
 			// Sync to other players.
 			if (math.any(position != new float3(transform.position))) {
 				// FIXME: Don't use connection ID
-				new PlayerTransformMessage(FindObjectOfType<Client>().connectionID, position).Send();
+				new PlayerTransformMessage(FindObjectOfType<Net.Client>().connectionID, position).Send();
 			}
 
 			// Apply position.
 			transform.position = position;
-
-			// Show chat message for a cat close by?
-			Actor closestActor = null;
-			foreach (var actor in FindObjectsOfType<Actor>()) {
-				var diff = new float3(actor.transform.position - transform.position);
-				if (math.dot(diff, diff) < 8f) {
-					if (closestActor != null) {
-						var diff2 = new float3(closestActor.transform.position - transform.position);
-						if (math.dot(diff2, diff2) > math.dot(diff, diff)) {
-							closestActor = actor;
-						}
-					} else {
-						closestActor = actor;
-					}
-				}
-			}
-			if (closestActor != null) {
-				if (GameObject.Find($"{closestActor.text}") == null) {
-					new CatTalkMessage(closestActor.transform.position, closestActor.text).Send();
-				}
-			}
 		}
 	}
 }

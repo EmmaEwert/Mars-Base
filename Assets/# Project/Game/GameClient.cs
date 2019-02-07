@@ -1,4 +1,4 @@
-namespace Game {
+namespace Game.Client {
 	using System.Collections.Generic;
 	using Net;
 	using TMPro;
@@ -21,7 +21,7 @@ namespace Game {
 		///<summary>Update position of a single remote player.</summary>
 		void SyncTransform(PlayerTransformMessage message) {
 			// FIXME: Should have player ID instead, connectionID is for internal use
-			if (message.id != GetComponent<Client>().connectionID) {
+			if (message.id != GetComponent<Net.Client>().connectionID) {
 				if (!players.TryGetValue(message.id, out var player)) {
 					players[message.id] = Instantiate(remotePlayerPrefab);
 				}
@@ -38,14 +38,29 @@ namespace Game {
 			talk.transform.position = message.position;
 			talk.name = message.text;
 		}
+
+		void SetSprite(SpriteMessage message) {
+			var manager = FindObjectOfType<EntityManager>();
+			var entity = manager.Entity(message.id);
+			var renderer = manager.AddComponent<SpriteRenderer>(entity);
+			renderer.sprite = Resources.Load<Sprite>($"Sprites/{message.sprite}");
+		}
+
+		void SetPosition(PositionMessage message) {
+			var manager = FindObjectOfType<EntityManager>();
+			var entity = manager.Entity(message.id);
+			entity.transform.position = message.position;
+		}
 		
 		void Start() {
-			Client.Listen<ConnectServerMessage>(StartClientGame);
-			Client.Listen<PlayerTransformMessage>(SyncTransform);
-			Client.Listen<CatTalkMessage>(ReceiveCatTalk);
-			var client = gameObject.AddComponent<Client>();
+			Net.Client.Listen<ConnectServerMessage>(StartClientGame);
+			Net.Client.Listen<PlayerTransformMessage>(SyncTransform);
+			Net.Client.Listen<CatTalkMessage>(ReceiveCatTalk);
+			Net.Client.Listen<SpriteMessage>(SetSprite);
+			Net.Client.Listen<PositionMessage>(SetPosition);
+			var client = gameObject.AddComponent<Net.Client>();
 			client.remoteIP = remoteIP;
-			Client.playerName = playerName;
+			Net.Client.playerName = playerName;
 		}
 	}
 }

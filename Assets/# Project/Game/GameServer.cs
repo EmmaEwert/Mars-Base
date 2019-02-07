@@ -1,5 +1,4 @@
-namespace Game {
-	using Net;
+namespace Game.Server {
 	using Unity.Mathematics;
 	using UnityEngine;
 
@@ -39,14 +38,35 @@ namespace Game {
 			"...do you ever wish we had enough rovers to race them?",
 			"Eugh... hearing the dust storms against the ice shield makes my fur stand on end.",
 		};
+		string[] catSprites = {
+			"cat1",
+			"cat2",
+			"cat3",
+			"cat4",
+			"cat5",
+			"cat6",
+			"cat7",
+			"cat8",
+			"cat9",
+			"cat10",
+			"cat11",
+			"cat12",
+		};
 
 		void Start() {
-			Server.Listen<PlayerTransformMessage>(m => m.Broadcast());
-			Server.Listen<CatTalkMessage>(m => m.Broadcast());
-			gameObject.AddComponent<Server>();
+			Net.Server.Listen<PlayerTransformMessage>(m => m.Broadcast());
+			Net.Server.Listen<CatTalkMessage>(m => m.Broadcast());
+			gameObject.AddComponent<Net.Server>();
 			var random = new Unity.Mathematics.Random(1); 
+			var manager = FindObjectOfType<Server.EntityManager>();
 			for (var i = 0; i < catStrings.Length; ++i) {
-				ActorManager.instance.Spawn(catStrings[i], new float3(random.NextInt() % 128, 1, 0));
+				var entity = manager.Create();
+				var talker = manager.AddComponent<Talker>(entity);
+				var sprite = manager.AddComponent<RenderSprite>(entity);
+				var position = manager.AddComponent<Position>(entity);
+				talker.text = catStrings[i];
+				sprite.resource = catSprites[random.NextUInt() % catSprites.Length];
+				position.value = new float3(random.NextInt() % 128, 0.5f, 0);
 			}
 		}
 	}
