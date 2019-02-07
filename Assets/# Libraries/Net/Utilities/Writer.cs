@@ -21,7 +21,6 @@ namespace Net {
 
 		internal byte[] ToArray() {
 			var data = stream.ToArray();
-			//byte[] data;
 			using (var outStream = new MemoryStream()) {
 				using (var deflateStream = new DeflateStream(outStream, CompressionLevel.Optimal)) {
 					deflateStream.Write(data, 0, data.Length);
@@ -32,6 +31,16 @@ namespace Net {
 			Buffer.BlockCopy(BitConverter.GetBytes(data.Length), 0, bytes, 0, sizeof(int));
 			Buffer.BlockCopy(data, 0, bytes, sizeof(int), data.Length);
 			return bytes;
+		}
+
+		internal void Write(Type type, object value) {
+			if (type == typeof(int)) {
+				Write((int)value);
+			} else if (type == typeof(float3)) {
+				Write((float3)value);
+			} else if (type == typeof(string)) {
+				Write((string)value);
+			}
 		}
 
 		internal void Write(ushort[] value) {

@@ -7,7 +7,7 @@ namespace Game.Server {
 			var entities = Manager.FindAll(typeof(Position));
 			foreach (var entity in entities) {
 				var position = entity.GetComponent<Position>().value;
-				new PositionMessage(entity, position).Send(message.connection);
+				new PositionMessage { id = entity.id, position = position }.Send(message.connection);
 			}
 		}
 
@@ -17,7 +17,7 @@ namespace Game.Server {
 
 		void OnUpdate(Entity entity, Position position, Velocity _) {
 			if (math.any(position.value != new float3(entity.transform.position))) {
-				new PositionMessage(entity, position.value).Broadcast();
+				new PositionMessage { id = entity.id, position = position.value }.Broadcast();
 			}
 		}
 	}

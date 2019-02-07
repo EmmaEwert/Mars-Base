@@ -31,6 +31,21 @@ namespace Net {
 			stream.Dispose();
 		}
 
+		internal void Read(Type type, out object value) {
+			if (type == typeof(int)) {
+				Read(out int result);
+				value = result;
+			} else if (type == typeof(float3)) {
+				Read(out float3 result);
+				value = result;
+			} else if (type == typeof(string)) {
+				Read(out string result);
+				value = result;
+			} else {
+				value = null;
+			}
+		}
+
 		internal void Read(ref ushort[] value) {
 			var bytes = reader.ReadBytes(sizeof(ushort) * value.Length);
 			Buffer.BlockCopy(bytes, 0, value, 0, bytes.Length);
