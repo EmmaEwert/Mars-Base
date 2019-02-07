@@ -8,6 +8,7 @@ namespace Sandbox.Net {
 	using UnityEngine;
 
 	public class Client : MonoBehaviour {
+		public static string playerName;
 		internal static List<Message> receivedMessages = new List<Message>();
 		static List<NativeArray<byte>> sentMessages = new List<NativeArray<byte>>();
 		static Dictionary<Type, Action<Message>> handlers = new Dictionary<Type, Action<Message>>();
@@ -27,7 +28,6 @@ namespace Sandbox.Net {
 			sentMessages.Add(data);
 		}
 
-		public string playerName;
 		public string remoteIP;
 		///<summary>Client's unique connection ID on the server.</summary>
 		internal int connectionID;
@@ -81,7 +81,6 @@ namespace Sandbox.Net {
 			var receiveJob = new ReceiveJob {
 				driver = driver,
 				connection = connection,
-				playerName = playerName
 			};
 			receiveJobHandle = driver.ScheduleUpdate();
 			receiveJobHandle = receiveJob.Schedule(receiveJobHandle);
@@ -117,7 +116,6 @@ namespace Sandbox.Net {
 		struct ReceiveJob : IJob {
 			public BasicNetworkDriver<IPv4UDPSocket> driver;
 			public NativeArray<NetworkConnection> connection;
-			public string playerName;
 
 			public void Execute() {
 				if (!connection[0].IsCreated) { return; }

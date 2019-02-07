@@ -3,7 +3,6 @@ using Sandbox.Net;
 using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class Game : MonoBehaviour {
 	public string playerName { get; set; } = "Emma";
@@ -16,7 +15,6 @@ public class Game : MonoBehaviour {
 	Dictionary<int, GameObject> players = new Dictionary<int, GameObject>();
 	public Dictionary<int, GameObject> npcs = new Dictionary<int, GameObject>();
 	List<(float3 pos, string text)> serverNPCs = new List<(float3, string)>();
-	bool server;
 	string[] catStrings = {
 		"Hum hum hummm...",
 		"Nice day out today!",
@@ -57,7 +55,6 @@ public class Game : MonoBehaviour {
 
 	///<summary>Start a server and a client.</summary>
 	public void Host() {
-		server = true;
 		gameObject.AddComponent<Server>();
 		var random = new Unity.Mathematics.Random(1); 
 		for (var i = 0; i < catStrings.Length; ++i) {
@@ -65,19 +62,19 @@ public class Game : MonoBehaviour {
 		}
 		var client = gameObject.AddComponent<Client>();
 		client.remoteIP = IP.local.ToString();
-		client.playerName = playerName;
+		Client.playerName = playerName;
+	}
+
+	///<summary>Send all cats and their text lines to client upon request.</summary>
+	void SendCatsToClient(ConnectClientMessage message) {
+		for (var i = 0; i < serverNPCs.Count; ++i) {
+			new CatSpawnMessage(i, serverNPCs[i].pos, serverNPCs[i].text).Send(message.connection);
+		}
 	}
 
 	///<summary>Relay player positions to all clients.</summary>
 	void BroadcastTransform(PlayerTransformMessage message) {
 		message.Broadcast();
-	}
-
-	///<summary>Send all cats and their text lines to client upon request.</summary>
-	void SendCatsToClient(GiveMeTheCatsMessage message) {
-		for (var i = 0; i < serverNPCs.Count; ++i) {
-			new CatSpawnMessage(i, serverNPCs[i].pos, serverNPCs[i].text).Send(message.connection);
-		}
 	}
 
 	///<summary>Relay cat talk to all clients.</summary>
@@ -91,12 +88,11 @@ public class Game : MonoBehaviour {
 	public void Join() {
 		var client = gameObject.AddComponent<Client>();
 		client.remoteIP = remoteIP;
-		client.playerName = playerName;
+		Client.playerName = playerName;
 	}
 
 	///<summary>Request all cats on the server and deactivate the main menu.</summary>
 	void StartClientGame(ConnectServerMessage message) {
-		new GiveMeTheCatsMessage().Send();
 		GameObject.Find("Main Menu").SetActive(false);
 		Instantiate(localPlayerPrefab);
 	}
@@ -138,8 +134,8 @@ public class Game : MonoBehaviour {
 		Client.Listen<PlayerTransformMessage>(SyncTransform);
 		Client.Listen<CatSpawnMessage>(ReceiveCat);
 		Client.Listen<CatTalkMessage>(ReceiveCatTalk);
+		Server.Listen<ConnectClientMessage>(SendCatsToClient);
 		Server.Listen<PlayerTransformMessage>(BroadcastTransform);
-		Server.Listen<GiveMeTheCatsMessage>(SendCatsToClient);
 		Server.Listen<CatTalkMessage>(BroadcastCatTalk);
 	}
 }
