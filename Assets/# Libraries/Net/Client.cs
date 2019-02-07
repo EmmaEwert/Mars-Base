@@ -12,7 +12,7 @@ namespace Sandbox.Net {
 		static List<NativeArray<byte>> sentMessages = new List<NativeArray<byte>>();
 		static Dictionary<Type, Action<Message>> handlers = new Dictionary<Type, Action<Message>>();
 
-		///<summary>Add a handler to be called on receiving a Message of a specific type.</summary>
+		///<summary>Add a handler to be called when client receives a Message of a specific type.</summary>
 		public static void Listen<T>(Action<T> handler) where T : Message {
 			if (Client.handlers.TryGetValue(typeof(T), out var handlers)) {
 				Client.handlers[typeof(T)] = handlers + new Action<Message>(o => handler((T)o));
@@ -29,9 +29,9 @@ namespace Sandbox.Net {
 
 		public string playerName;
 		public string remoteIP;
-		///<summary>Client's unique connection ID on the server</summary>
+		///<summary>Client's unique connection ID on the server.</summary>
 		internal int connectionID;
-		///<summary>Other clients' names and unique connection IDs on the server</summary>
+		///<summary>Other clients' names and unique connection IDs on the server.</summary>
 		internal Dictionary<int, string> playerConnections = new Dictionary<int, string>();
 		BasicNetworkDriver<IPv4UDPSocket> driver;
 		NativeArray<NetworkConnection> connection;

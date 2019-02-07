@@ -9,19 +9,12 @@
 	using UnityEngine;
 
 	public class Server : MonoBehaviour {
-		public static Dictionary<int, string> players = new Dictionary<int, string>();
-		public static NetworkConnection[] Connections = new NetworkConnection[0];
 		internal static List<Message> receivedMessages = new List<Message>();
-		static NativeList<NetworkConnection> connections;
-		static BasicNetworkDriver<IPv4UDPSocket> driver;
+		static List<(int connection, NativeArray<byte> data)> sentMessages = new List<(int, NativeArray<byte>)>();
 		static ConcurrentQueue<NativeArray<byte>> broadcasts = new ConcurrentQueue<NativeArray<byte>>();
-		static List<(int connection, NativeArray<byte> data)> messages = new List<(int, NativeArray<byte>)>();
-		static JobHandle receiveJobHandle;
-		static JobHandle[] sendJobHandles = new JobHandle[0];
-		static JobHandle[] broadcastJobHandles = new JobHandle[0];
-		static float ping;
 		static Dictionary<System.Type, Action<Message>> handlers = new Dictionary<Type, Action<Message>>();
 
+		///<summary>Add a handler to be called when server receives a Message of a specific type.</summary>
 		public static void Listen<T>(Action<T> handler) where T : Message {
 			if (Server.handlers.TryGetValue(typeof(T), out var handlers)) {
 				Server.handlers[typeof(T)] = handlers + new Action<Message>(o => handler((T)o));
@@ -30,8 +23,53 @@
 			}
 		}
 
-		///<summary>Start a local server and a client with the given player name.</summary>
+		///<summary>Queue a Message-as-byte-array for sending to all clients.</summary>
+		internal static void Broadcast(byte[] bytes) {
+			var data = new NativeArray<byte>(bytes, Allocator.TempJob);
+			broadcasts.Enqueue(data);
+		}
+
+		///<summary>Queue a Message-as-byte-array for sending to a client.</summary>
+		internal static void Send(byte[] bytes, int connection) {
+			var data = new NativeArray<byte>(bytes, Allocator.TempJob);
+			sentMessages.Add((connection, data));
+		}
+
+		///<summary>Clients' names and unique connection IDs.</summary>
+		public Dictionary<int, string> playerConnections = new Dictionary<int, string>();
+		public NetworkConnection[] Connections = new NetworkConnection[0];
+		NativeList<NetworkConnection> connections;
+		BasicNetworkDriver<IPv4UDPSocket> driver;
+		JobHandle receiveJobHandle;
+		JobHandle[] sendJobHandles = new JobHandle[0];
+		JobHandle[] broadcastJobHandles = new JobHandle[0];
+		float ping;
+
+		///<summary>Call all handlers listening for a Message, based on its type.</summary>
+		void Handle(Message message) {
+			if (handlers.TryGetValue(message.GetType(), out var handler)) {
+				handler(message);
+			} else {
+				Debug.Log($"S: No handlers for {message.GetType()}, ignoring…");
+			}
+		}
+
+		///<summary>Send a list of connected players to a newly connected player.</summary>
+		void SendConnectedPlayers(ConnectClientMessage message) {
+			playerConnections.Add(message.connection, message.name);
+			new ConnectServerMessage(message.connection).Send(message.connection);
+			new JoinMessage(message.connection, message.name).Broadcast();
+			foreach (var player in playerConnections) {
+				if (player.Key != message.connection) {
+					new JoinMessage(player.Key, player.Value).Send(message.connection);
+				}
+			}
+		}
+
+		///<summary>Set up listeners and data structures, and listen for connections.</summary>
 		void Start() {
+			Listen<ConnectClientMessage>(SendConnectedPlayers);
+			Listen<PingMessage>(_ => {});
 			driver = new BasicNetworkDriver<IPv4UDPSocket>(new INetworkParameter[0]);
 			var endpoint = new IPEndPoint(IP.local, 54889);
 			if (driver.Bind(endpoint) != 0) {
@@ -41,50 +79,31 @@
 				Debug.Log($"S: Listening on {endpoint.Address}:{endpoint.Port}…");
 			}
 			connections = new NativeList<NetworkConnection>(16, Allocator.Persistent);
-			Listen<ConnectClientMessage>(SendPlayerState);
-			Listen<PingMessage>(_ => {});
 		}
 
-		///<summary>Clean up server handles.</summary>
-		public static void Stop() {
-			receiveJobHandle.Complete();
-			for (var i = 0; i < sendJobHandles.Length; ++i) {
-				sendJobHandles[i].Complete();
-				messages[i].data.Dispose();
-			}
-			messages.RemoveRange(0, sendJobHandles.Length);
-			for (var i = 0; i < broadcastJobHandles.Length; ++i) {
-				broadcastJobHandles[i].Complete();
-				//broadcasts[i].Dispose();
-			}
-			//broadcasts.RemoveRange(0, broadcastJobHandles.Length);
-			driver.Dispose();
-			connections.Dispose();
-		}
-
-		///<summary>Update the server state through network IO.</summary>
+		///<summary>Handle messages, and update message and network state.</summary>
 		void Update() {
-			// Finish up last frame's jobs
+			// Finish up last frame's jobs.
 			receiveJobHandle.Complete();
 			for (var i = 0; i < sendJobHandles.Length; ++i) {
 				sendJobHandles[i].Complete();
-				messages[i].data.Dispose();
+				sentMessages[i].data.Dispose();
 			}
-			messages.RemoveRange(0, sendJobHandles.Length);
+			sentMessages.RemoveRange(0, sendJobHandles.Length);
 			for (var i = 0; i < broadcastJobHandles.Length; ++i) {
 				broadcastJobHandles[i].Complete();
 			}
 			Connections = connections.ToArray();
 
-			// Process received messages
+			// Process received messages.
 			var messageCount = receivedMessages.Count;
 			for (var i = 0; i < messageCount; ++i) {
-				OnReceive(receivedMessages[i]);
+				Handle(receivedMessages[i]);
 			}
 			receivedMessages.RemoveRange(0, messageCount);
 
 
-			// Schedule new network connection and event reception
+			// Schedule new network connection and event reception.
 			var concurrentDriver = driver.ToConcurrent();
 			var updateJob = new UpdateJob {
 				driver = driver,
@@ -98,18 +117,18 @@
 			receiveJobHandle = updateJob.Schedule(receiveJobHandle);
 			receiveJobHandle = receiveJob.Schedule(connections, 1, receiveJobHandle);
 
-			// Schedule message queue sending
-			sendJobHandles = new JobHandle[messages.Count];
-			for (var i = 0; i < messages.Count; ++i) {
+			// Schedule message queue sending.
+			sendJobHandles = new JobHandle[sentMessages.Count];
+			for (var i = 0; i < sentMessages.Count; ++i) {
 				receiveJobHandle = new SendJob {
 					driver = concurrentDriver,
 					connections = connections,
-					message = messages[i].data,
-					index = messages[i].connection
+					message = sentMessages[i].data,
+					index = sentMessages[i].connection
 				}.Schedule(receiveJobHandle);
 			}
 
-			// Schedule broadcast queue sending
+			// Schedule broadcast queue sending.
 			broadcastJobHandles = new JobHandle[broadcasts.Count];
 			for (var i = 0; i < broadcastJobHandles.Length; ++i) {
 				broadcasts.TryDequeue(out var message);
@@ -119,11 +138,10 @@
 					message = message
 				}.Schedule(connections, 1, receiveJobHandle);
 			}
-			//broadcasts.RemoveRange(0, broadcastJobHandles.Length);
 
 			JobHandle.ScheduleBatchedJobs();
 
-			// Send pings
+			// HACK: Send pings to keep connections alive.
 			ping += Time.deltaTime;
 			if (ping >= 5f) {
 				ping = 0f;
@@ -131,46 +149,19 @@
 			}
 		}
 
-		internal static void Broadcast(byte[] bytes) {
-			var data = new NativeArray<byte>(bytes, Allocator.TempJob);
-			broadcasts.Enqueue(data);
-		}
-
-		internal static void Send(byte[] bytes, int connection) {
-			var data = new NativeArray<byte>(bytes, Allocator.TempJob);
-			messages.Add((connection, data));
-			//list.Add(data);
-		}
-
-		static void SendPlayerState(ConnectClientMessage message) {
-			players.Add(message.connection, message.name);
-			new ConnectServerMessage(message.connection).Send(message.connection);
-			new JoinMessage(message.connection, message.name).Broadcast();
-			foreach (var player in Server.players) {
-				if (player.Key != message.connection) {
-					new JoinMessage(player.Key, player.Value).Send(message.connection);
-				}
-			}
-		}
-
-		static void OnReceive(Message message) {
-			if (handlers.TryGetValue(message.GetType(), out var handler)) {
-				handler(message);
-			} else {
-				Debug.Log($"No server handlers for {message.GetType()}, ignoring…");
-			}
-		}
-		
-		static void Receive(Reader reader, int connection) {
-			reader.Read(out ushort typeIndex);
-			var type = Message.Types[typeIndex];
-			var message = (Message)Activator.CreateInstance(type);
-			message.Receive(reader, connection);
-		}
-
 		///<summary>Clean up network internals before quitting.</summary>
 		void OnApplicationQuit() {
-			Server.Stop();
+			receiveJobHandle.Complete();
+			for (var i = 0; i < sendJobHandles.Length; ++i) {
+				sendJobHandles[i].Complete();
+				sentMessages[i].data.Dispose();
+			}
+			sentMessages.RemoveRange(0, sendJobHandles.Length);
+			for (var i = 0; i < broadcastJobHandles.Length; ++i) {
+				broadcastJobHandles[i].Complete();
+			}
+			driver.Dispose();
+			connections.Dispose();
 		}
 
 		struct UpdateJob : IJob {
@@ -178,15 +169,14 @@
 			public NativeList<NetworkConnection> connections;
 
 			public void Execute() {
-				// Clean up connections
+				// Clean up stale connections.
 				for (var i = 0; i < connections.Length; ++i) {
 					if (!connections[i].IsCreated) {
 						connections.RemoveAtSwapBack(i);
 						--i;
 					}
 				}
-
-				// Accept new connections
+				// Accept new connections.
 				NetworkConnection c;
 				while ((c = driver.Accept()) != default(NetworkConnection)) {
 					Debug.Log($"S: Accepted connection from {c.InternalId}");
@@ -195,6 +185,7 @@
 			}
 		}
 
+		///<summary>Handles reception of all network events.</summary>
 		struct ReceiveJob : IJobParallelFor {
 			public BasicNetworkDriver<IPv4UDPSocket>.Concurrent driver;
 			public NativeArray<NetworkConnection> connections;
@@ -209,7 +200,10 @@
 							break;
 						case NetworkEvent.Type.Data:
 							using (var reader = new Reader(streamReader)) {
-								Receive(reader, connections[index].InternalId);
+								reader.Read(out ushort typeIndex);
+								var type = Message.Types[typeIndex];
+								var message = (Message)Activator.CreateInstance(type);
+								message.Receive(reader, connections[index].InternalId);
 							}
 							break;
 					}
@@ -217,6 +211,7 @@
 			}
 		}
 
+		///<summary>Send queued messages to clients.</summary>
 		struct SendJob : IJob {
 			public BasicNetworkDriver<IPv4UDPSocket>.Concurrent driver;
 			[ReadOnly] public NativeList<NetworkConnection> connections;
@@ -231,6 +226,7 @@
 			}
 		}
 
+		///<summary>Send queued broadcasts to all clients.</summary>
 		struct BroadcastJob : IJobParallelFor {
 			public BasicNetworkDriver<IPv4UDPSocket>.Concurrent driver;
 			[ReadOnly] public NativeArray<NetworkConnection> connections;

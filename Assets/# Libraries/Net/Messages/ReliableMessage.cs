@@ -100,8 +100,9 @@ namespace Sandbox.Net {
 		///<summary>Broadcast from server to all clients.</summary>
 		public override void Broadcast() {
 			if (this is IServerMessage message) {
-				for (var connection = 0; connection < Server.Connections.Length; ++connection) {
-					Send(connection);
+				var connections = GameObject.FindObjectOfType<Server>().Connections;
+				for (var i = 0; i < connections.Length; ++i) {
+					Send(connections[i].InternalId);
 				}
 			}
 		}
