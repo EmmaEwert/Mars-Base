@@ -95,6 +95,8 @@ namespace Net {
 				}.Schedule(receiveJobHandle);
 			}
 
+			JobHandle.ScheduleBatchedJobs();
+
 			ReliableMessage.Update();
 		}
 

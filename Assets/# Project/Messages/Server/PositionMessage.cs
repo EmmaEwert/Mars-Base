@@ -2,7 +2,7 @@ namespace Game {
 	using Net;
 	using Unity.Mathematics;
 
-	public class PositionMessage : ReliableMessage, IServerMessage {
+	public class PositionMessage : Message, IServerMessage {
 		public int id;
 		public float3 position;
 

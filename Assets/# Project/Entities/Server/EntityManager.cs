@@ -7,7 +7,9 @@ namespace Game.Server {
 
 	public class EntityManager : MonoBehaviour {
 		Dictionary<int, Entity> entities = new Dictionary<int, Entity>();
-		Dictionary<Type, HashSet<int>> components = new Dictionary<Type, HashSet<int>>();
+		Dictionary<Type, HashSet<int>> components = new Dictionary<Type, HashSet<int>> {
+			{ typeof(Entity), new HashSet<int>() }
+		};
 		int nextID = 0;
 
 		internal Entity Create(string name = "") {
@@ -15,6 +17,7 @@ namespace Game.Server {
 			entity.transform.SetParent(transform);
 			entity.id = nextID;
 			entities[nextID++] = entity;
+			components[typeof(Entity)].Add(entity.id);
 			new EntityMessage(entity).Broadcast();
 			return entity;
 		}

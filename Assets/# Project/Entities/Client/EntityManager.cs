@@ -10,7 +10,10 @@ namespace Game.Client {
 		}
 
 		public Entity Entity(int id) {
-			return entities[id];
+			if (entities.TryGetValue(id, out var entity)) {
+				return entity;
+			}
+			return null;
 		}
 
 		void Instantiate(EntityMessage message) {

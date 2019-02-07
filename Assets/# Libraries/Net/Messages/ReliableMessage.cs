@@ -34,7 +34,7 @@ namespace Net {
 			time = Time.realtimeSinceStartup;
 
 			var clientSequences = clientMessages.Keys.ToList();
-			clientSequences.Sort();
+			//clientSequences.Sort();
 			foreach (var sequence in clientSequences) {
 				var message = clientMessages[sequence];
 				if (message.resends == 8) {
@@ -47,7 +47,7 @@ namespace Net {
 			}
 
 			var serverSequences = serverMessages.Keys.ToList();
-			serverSequences.Sort();
+			//serverSequences.Sort();
 			foreach (var client in serverSequences) {
 				var message = serverMessages[client];
 				if (message.resends == 8) {

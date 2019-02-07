@@ -1,5 +1,6 @@
 namespace Game.Server {
 	using Net;
+	using Unity.Mathematics;
 
 	public class SendPositionSystem : ComponentSystem {
 		void SendPosition(ConnectClientMessage message) {
@@ -12,6 +13,12 @@ namespace Game.Server {
 
 		void Start() {
 			Net.Server.Listen<ConnectClientMessage>(SendPosition);
+		}
+
+		void OnUpdate(Entity entity, Position position, Velocity _) {
+			if (math.any(position.value != new float3(entity.transform.position))) {
+				new PositionMessage(entity, position.value).Broadcast();
+			}
 		}
 	}
 }

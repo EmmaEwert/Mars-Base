@@ -61,10 +61,10 @@ namespace Game.Server {
 			var manager = FindObjectOfType<Server.EntityManager>();
 			for (var i = 0; i < catStrings.Length; ++i) {
 				var entity = manager.Create();
-				var talker = manager.AddComponent<Talker>(entity);
 				var sprite = manager.AddComponent<RenderSprite>(entity);
 				var position = manager.AddComponent<Position>(entity);
-				talker.text = catStrings[i];
+				var velocity = manager.AddComponent<Velocity>(entity);
+				velocity.value.x = random.NextFloat();
 				sprite.resource = catSprites[random.NextUInt() % catSprites.Length];
 				position.value = new float3(random.NextInt() % 128, 0.5f, 0);
 			}

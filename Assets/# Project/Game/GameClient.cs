@@ -11,6 +11,7 @@ namespace Game.Client {
 		GameObject localPlayerPrefab => Resources.Load("Local Player") as GameObject;
 		GameObject remotePlayerPrefab => Resources.Load("Remote Player") as GameObject;
 		Dictionary<int, GameObject> players = new Dictionary<int, GameObject>();
+		EntityManager manager;
 
 		///<summary>Request all cats on the server and deactivate the main menu.</summary>
 		void StartClientGame(ConnectServerMessage message) {
@@ -47,8 +48,8 @@ namespace Game.Client {
 		}
 
 		void SetPosition(PositionMessage message) {
-			var manager = FindObjectOfType<EntityManager>();
 			var entity = manager.Entity(message.id);
+			if (!entity) { return; }
 			entity.transform.position = message.position;
 		}
 		
@@ -61,6 +62,7 @@ namespace Game.Client {
 			var client = gameObject.AddComponent<Net.Client>();
 			client.remoteIP = remoteIP;
 			Net.Client.playerName = playerName;
+			manager = FindObjectOfType<EntityManager>();
 		}
 	}
 }

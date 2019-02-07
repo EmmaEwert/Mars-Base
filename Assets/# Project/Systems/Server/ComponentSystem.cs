@@ -6,7 +6,7 @@ namespace Game.Server {
 	using UnityEngine;
 
 	public abstract class ComponentSystem : MonoBehaviour {
-		List<(MethodInfo method, Type[] parameters)> updateMethods = new List<(MethodInfo, Type[])>();
+		List<(MethodInfo method, Type[] types)> updateMethods = new List<(MethodInfo, Type[])>();
 
 		EntityManager manager;
 		protected EntityManager Manager => manager = manager ?? FindObjectOfType<EntityManager>();
@@ -26,7 +26,7 @@ namespace Game.Server {
 
 		protected void Update() {
 			foreach (var updateMethod in updateMethods) {
-				var types = updateMethod.parameters;
+				var types = updateMethod.types;
 				var entities = Manager.FindAll(types);
 				foreach (var entity in entities) {
 					var parameters = types.Select(t => entity.GetComponent(t)).ToArray();
