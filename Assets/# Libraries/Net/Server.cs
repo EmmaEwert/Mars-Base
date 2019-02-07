@@ -1,4 +1,4 @@
-﻿namespace Sandbox.Net {
+﻿namespace Net {
 	using System;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;

@@ -1,4 +1,4 @@
-namespace Sandbox.Net {
+namespace Net {
 	internal class ConnectServerMessage : ReliableMessage, IServerMessage {
 		public int id;
 

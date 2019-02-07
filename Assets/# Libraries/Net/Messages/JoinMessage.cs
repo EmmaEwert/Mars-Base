@@ -1,4 +1,4 @@
-﻿namespace Sandbox.Net {
+﻿namespace Net {
 	public class JoinMessage : ReliableMessage, IServerMessage {
 		public int id;
 		public string name;

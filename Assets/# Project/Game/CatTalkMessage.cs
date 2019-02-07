@@ -1,4 +1,4 @@
-using Sandbox.Net;
+using Net;
 using Unity.Mathematics;
 
 public class CatTalkMessage : ReliableMessage, IClientMessage, IServerMessage {

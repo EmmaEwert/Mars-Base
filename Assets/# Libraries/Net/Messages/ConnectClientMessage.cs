@@ -1,4 +1,4 @@
-namespace Sandbox.Net {
+namespace Net {
 	public class ConnectClientMessage : ReliableMessage, IClientMessage {
 		public string name;
 

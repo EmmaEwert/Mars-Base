@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using TMPro;
-using Sandbox.Net;
+using Net;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Mathematics;

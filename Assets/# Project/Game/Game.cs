@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Sandbox.Net;
+using Net;
 using TMPro;
 using Unity.Mathematics;
 using UnityEngine;

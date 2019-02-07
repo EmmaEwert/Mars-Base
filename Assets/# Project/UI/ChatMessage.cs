@@ -1,4 +1,4 @@
-using Sandbox.Net;
+using Net;
 
 public class ChatMessage : ReliableMessage, IServerMessage, IClientMessage {
 	public int id;

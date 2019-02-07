@@ -1,4 +1,4 @@
-namespace Sandbox.Net {
+namespace Net {
 	using System;
 	using System.IO;
 	using System.IO.Compression;

@@ -1,4 +1,4 @@
-namespace Sandbox.Net {
+namespace Net {
 	internal class PingMessage : Message, IServerMessage, IClientMessage {
 		protected override int length => 0;
 
