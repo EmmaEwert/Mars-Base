@@ -30,16 +30,6 @@ namespace Game.Client {
 			}
 		}
 
-		///<summary>Spawn message prefab each time an npc cat is "talked with".</summary>
-		void ReceiveCatTalk(CatTalkMessage message) {
-			var canvas = GameObject.Find("World/Canvas");
-			var talk = Instantiate(catTalkPrefab);
-			talk.GetComponentInChildren<TextMeshProUGUI>().text = message.text;
-			talk.transform.SetParent(canvas.transform);
-			talk.transform.position = message.position;
-			talk.name = message.text;
-		}
-
 		void SetSprite(SpriteMessage message) {
 			var manager = FindObjectOfType<EntityManager>();
 			var entity = manager.Entity(message.id);
@@ -56,7 +46,6 @@ namespace Game.Client {
 		void Start() {
 			Net.Client.Listen<ConnectServerMessage>(StartClientGame);
 			Net.Client.Listen<PlayerTransformMessage>(SyncTransform);
-			Net.Client.Listen<CatTalkMessage>(ReceiveCatTalk);
 			Net.Client.Listen<SpriteMessage>(SetSprite);
 			Net.Client.Listen<PositionMessage>(SetPosition);
 			var client = gameObject.AddComponent<Net.Client>();
