@@ -7,7 +7,6 @@ public class GameClient : MonoBehaviour {
 	public string remoteIP;
 	public string playerName;
 	GameObject catTalkPrefab => Resources.Load("Cat Talk") as GameObject;
-	GameObject npcPrefab => Resources.Load("Remote Player") as GameObject;
 	GameObject localPlayerPrefab => Resources.Load("Local Player") as GameObject;
 	GameObject remotePlayerPrefab => Resources.Load("Remote Player") as GameObject;
 	Dictionary<int, GameObject> players = new Dictionary<int, GameObject>();
