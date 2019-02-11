@@ -58,14 +58,42 @@ namespace Game.Server {
 			gameObject.AddComponent<Net.Server>();
 			var random = new Unity.Mathematics.Random(1); 
 			var manager = FindObjectOfType<Server.EntityManager>();
+
+			// Habicat
+			var entity = manager.Create();
+			var sprite = manager.AddComponent<RenderSprite>(entity);
+			var position = manager.AddComponent<Position>(entity);
+			sprite.resource = "habicat";
+			position.value = new float3(5, 1.5f, 1);
+			// Path node
+			var habPathEntity = manager.Create();
+			position = manager.AddComponent<Position>(habPathEntity);
+			manager.AddComponent<PathNode>(habPathEntity);
+			position.value = new float3(3.5f, 1.125f, 0);
+
+			// Science lab
+			entity = manager.Create();
+			sprite = manager.AddComponent<RenderSprite>(entity);
+			position = manager.AddComponent<Position>(entity);
+			sprite.resource = "science-lab";
+			position.value = new float3(-5, 1.5f, 1);
+			// Path node
+			var labPathEntity = manager.Create();
+			position = manager.AddComponent<Position>(labPathEntity);
+			manager.AddComponent<PathNode>(labPathEntity);
+			position.value = new float3(-3.5f, 1.125f, 0);
+
+			// Cats
 			for (var i = 0; i < catStrings.Length; ++i) {
-				var entity = manager.Create();
-				var sprite = manager.AddComponent<RenderSprite>(entity);
-				var position = manager.AddComponent<Position>(entity);
+				entity = manager.Create();
+				sprite = manager.AddComponent<RenderSprite>(entity);
+				position = manager.AddComponent<Position>(entity);
 				var velocity = manager.AddComponent<Velocity>(entity);
-				velocity.value.x = random.NextFloat();
+				var path = manager.AddComponent<Destination>(entity);
 				sprite.resource = catSprites[random.NextUInt() % catSprites.Length];
 				position.value = new float3(random.NextInt() % 128, 0.5f, 0);
+				velocity.value.x = random.NextFloat();
+				path.nodeID = habPathEntity.id;
 			}
 		}
 	}

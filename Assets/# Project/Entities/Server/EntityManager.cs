@@ -22,13 +22,29 @@ namespace Game.Server {
 			return entity;
 		}
 
+		internal Entity Entity(int id) {
+			return entities[id];
+		}
+
 		internal T AddComponent<T>(Entity entity) where T : Component {
 			var component = entity.gameObject.AddComponent<T>();
-			if (!components.TryGetValue(component.GetType(), out var set)) {
-				set = components[component.GetType()] = new HashSet<int>();
+			if (!components.TryGetValue(typeof(T), out var set)) {
+				set = components[typeof(T)] = new HashSet<int>();
 			}
 			set.Add(entity.id);
 			return component;
+		}
+
+		internal T GetComponent<T>(Entity entity) where T : Component {
+			var component = entity.gameObject.GetComponent<T>();
+			return component;
+		}
+
+		internal void RemoveComponent<T>(Entity entity) where T : Component {
+			Destroy(entity.gameObject.GetComponent<T>());
+			if (components.TryGetValue(typeof(T), out var set)) {
+				set.Remove(entity.id);
+			}
 		}
 
 		internal List<Entity> FindAll(params Type[] types) {
