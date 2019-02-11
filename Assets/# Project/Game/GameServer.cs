@@ -55,7 +55,6 @@ namespace Game.Server {
 
 		void Start() {
 			Net.Server.Listen<PlayerTransformMessage>(m => m.Broadcast());
-			Net.Server.Listen<CatTalkMessage>(m => m.Broadcast());
 			gameObject.AddComponent<Net.Server>();
 			var random = new Unity.Mathematics.Random(1); 
 			var manager = FindObjectOfType<Server.EntityManager>();
