@@ -17,6 +17,7 @@ namespace Game.Server {
 
 		void OnUpdate(Entity entity, Position position, Velocity _) {
 			if (math.any(position.value != new float3(entity.transform.position))) {
+				entity.transform.position = position.value;
 				new PositionMessage { id = entity.id, position = position.value }.Broadcast();
 			}
 		}
