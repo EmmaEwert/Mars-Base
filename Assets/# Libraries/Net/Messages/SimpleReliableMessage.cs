@@ -3,7 +3,7 @@ namespace Net {
 	using System.Runtime.InteropServices;
 
 	///<summary>Automatically serializes and deserializes simple fields.</summary>
-	public abstract class SimpleReliableMessage : Message, IServerMessage, IClientMessage {
+	public abstract class SimpleReliableMessage : ReliableMessage, IServerMessage, IClientMessage {
 		FieldInfo[] fields => GetType().GetFields(BindingFlags.Instance | BindingFlags.Public);
 
 		protected override int length {
